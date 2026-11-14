@@ -1,4 +1,5 @@
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useCallback, useMemo, type ReactNode } from "react";
+import { uiTranslations } from "./ui-translations";
 
 export type Lang = "en" | "id";
 
@@ -6,8 +7,8 @@ const en = {
   tagline: "Earth observation system",
   sampleData: "Sample archive",
   audience: "Audience",
-  public: "Public",
-  responder: "Responder",
+  public: "General",
+  responder: "Technical",
   export: "Export report",
   nav_map: "Live map",
   nav_overview: "Overview",
@@ -84,8 +85,8 @@ const id: Dict = {
   tagline: "Sistem observasi bumi",
   sampleData: "Arsip contoh",
   audience: "Audiens",
-  public: "Publik",
-  responder: "Responden",
+  public: "Umum",
+  responder: "Teknis",
   export: "Ekspor laporan",
   nav_map: "Peta langsung",
   nav_overview: "Ringkasan",
@@ -160,8 +161,34 @@ const id: Dict = {
 export type TKey = keyof Dict;
 const dicts: Record<Lang, Dict> = { en, id };
 const Ctx = createContext<(k: TKey) => string>((k) => en[k]);
+const LanguageContext = createContext<Lang>("en");
 
 export function I18nProvider({ lang, children }: { lang: Lang; children: ReactNode }) {
-  return <Ctx.Provider value={(k) => dicts[lang][k]}>{children}</Ctx.Provider>;
+  return (
+    <LanguageContext.Provider value={lang}>
+      <Ctx.Provider value={(k) => dicts[lang][k]}>{children}</Ctx.Provider>
+    </LanguageContext.Provider>
+  );
 }
 export const useT = () => useContext(Ctx);
+export const useLang = () => useContext(LanguageContext);
+export function useMonths(format: "short" | "long" = "short") {
+  const lang = useLang();
+  return useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, month) =>
+        new Intl.DateTimeFormat(lang === "id" ? "id-ID" : "en", {
+          month: format,
+          timeZone: "UTC",
+        }).format(new Date(Date.UTC(2024, month, 1))),
+      ),
+    [lang, format],
+  );
+}
+export function useText() {
+  const lang = useLang();
+  return useCallback(
+    (value: string) => (lang === "id" ? (uiTranslations[value] ?? value) : value),
+    [lang],
+  );
+}

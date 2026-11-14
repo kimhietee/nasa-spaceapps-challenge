@@ -1,0 +1,9 @@
+# Tested local dependency set
+fastapi==0.162.7
+starlette==1.10.0
+uvicorn==0.54.0
+numpy==2.5.4
+scipy==1.18.1
+shapely==2.2.0
+pytest==9.2.0
+httpx==0.28.1

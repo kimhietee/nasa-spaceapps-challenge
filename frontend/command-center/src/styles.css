@@ -9,6 +9,8 @@
 @source "../src";
 @import "tw-animate-css";
 @import "leaflet/dist/leaflet.css";
+@import "./archive-layout.css";
+@import "./analysis-design.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -272,8 +274,8 @@
   background: var(--map-surface);
   font-family: var(--font-sans);
 }
-.fw-map .leaflet-tile-pane {
-  filter: sepia(0.55) hue-rotate(105deg) saturate(1.5) brightness(0.85) contrast(1.05);
+.dark .fw-map .leaflet-tile-pane {
+  filter: brightness(1.08) contrast(1.08);
 }
 .leaflet-tooltip.fw-tip {
   background: var(--popover);
@@ -329,7 +331,8 @@
 
 /* Real archive controls and the supplied sensor/status legend. */
 .archive-button,
-select {
+  select,
+  .archive-shell input[type="date"] {
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--card);

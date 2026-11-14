@@ -9,3 +9,6 @@ __pycache__/
 data/raw/
 data/processed/
 data/*.db
+
+# Archive backend runtime data
+backend/data/

@@ -34,7 +34,7 @@ rebuilding data because historical responses are cached within the process.
 
 Terminal 1:
 ```powershell
-.\.venv\Scripts\python.exe -m uvicorn backend.api:app --host 127.0.0.1 --port 8020
+.\.venv\Scripts\python.exe -m uvicorn backend.api:app --host 127.0.0.1 --port 8021
 ```
 
 Terminal 2:
@@ -42,7 +42,7 @@ Terminal 2:
 npm.cmd run dev -- --host 127.0.0.1 --port 8080
 ```
 
-Open http://127.0.0.1:8080 . API documentation: http://127.0.0.1:8020/docs .
+Open http://127.0.0.1:8080 . API documentation: http://127.0.0.1:8021/docs .
 Vite proxies /api/archive to the local backend. For a separately hosted frontend,
 set VITE_ARCHIVE_API to the HTTPS Python service origin at build time and add the
 frontend origin to the backend CORS list. Keep the SQLite file on persistent
