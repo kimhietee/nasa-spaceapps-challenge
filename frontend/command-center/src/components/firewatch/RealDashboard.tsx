@@ -14,6 +14,8 @@ import {
 import type { MapView } from "./FireMap";
 import { I18nProvider, useT, type Lang } from "@/lib/firewatch/i18n";
 const API = import.meta.env["VITE_ARCHIVE_API"] ?? "";
+const DEFAULT_YEAR = 2022;
+const DEFAULT_MONTH = "1";
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 async function request(path: string, signal?: AbortSignal) {
   const r = await fetch(API + path, signal ? { signal } : {});
@@ -56,8 +58,8 @@ function ArchiveDashboard({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =>
     [sensitivity, setSensitivity] = useState<any>(null);
   const [startDate, setStartDate] = useState(""),
     [endDate, setEndDate] = useState(""),
-    [year, setYear] = useState(0),
-    [month, setMonth] = useState(""),
+    [year, setYear] = useState(DEFAULT_YEAR),
+    [month, setMonth] = useState(DEFAULT_MONTH),
     [region, setRegion] = useState(""),
     [daynight, setDaynight] = useState(""),
     [view, setView] = useState<MapView>("harmonized"),
@@ -108,11 +110,12 @@ function ArchiveDashboard({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =>
     if (endDate) q.set("end_date", endDate);
     request("/api/archive/dashboard?" + q, abort.signal)
       .then((d) => {
+        if (abort.signal.aborted) return;
         setData(d);
         setLoading(false);
       })
       .catch((e) => {
-        if (e.name !== "AbortError") {
+        if (!abort.signal.aborted && e.name !== "AbortError") {
           setError(e.message);
           setLoading(false);
         }
@@ -123,9 +126,11 @@ function ArchiveDashboard({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =>
     const abort = new AbortController();
     setAnomalies(null);
     request("/api/archive/anomalies?year=" + analysisYear, abort.signal)
-      .then(setAnomalies)
+      .then((result) => {
+        if (!abort.signal.aborted) setAnomalies(result);
+      })
       .catch((e) => {
-        if (e.name !== "AbortError") setError(e.message);
+        if (!abort.signal.aborted && e.name !== "AbortError") setError(e.message);
       });
     return () => abort.abort();
   }, [analysisYear]);
@@ -346,8 +351,8 @@ function ArchiveDashboard({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =>
               onClick={() => {
                 setStartDate("");
                 setEndDate("");
-                setYear(0);
-                setMonth("");
+                setYear(DEFAULT_YEAR);
+                setMonth(DEFAULT_MONTH);
                 setRegion("");
                 setDaynight("");
               }}

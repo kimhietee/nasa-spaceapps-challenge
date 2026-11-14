@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import { RealDashboard } from "./RealDashboard";
-vi.mock("./ArchiveMap", () => ({ ArchiveMap: () => <div>Map renderer</div> }));
+vi.mock("./ArchiveMap", () => ({
+  ArchiveMap: ({ query }: { query: string }) => <div data-testid="archive-map" data-query={query}>Map renderer</div>,
+}));
 vi.mock("recharts", () => ({
   ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
   LineChart: () => <div>Monthly chart</div>,
@@ -77,6 +79,25 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("Real archive dashboard", () => {
+  it("requests January 2022 initially and restores it when filters reset", async () => {
+    render(<RealDashboard />);
+    expect(screen.getByLabelText("Archive year")).toHaveValue("2022");
+    expect(screen.getByLabelText("Archive month")).toHaveValue("1");
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/archive/dashboard?year=2022&month=1"),
+        expect.anything(),
+      ),
+    );
+    expect(screen.getByTestId("archive-map")).toHaveAttribute("data-query", "year=2022&month=1");
+    fireEvent.change(screen.getByLabelText("Archive year"), { target: { value: "0" } });
+    fireEvent.change(screen.getByLabelText("Archive month"), { target: { value: "" } });
+    expect(screen.getByTestId("archive-map")).toHaveAttribute("data-query", "");
+    fireEvent.click(screen.getByRole("button", { name: "Reset filters" }));
+    expect(screen.getByLabelText("Archive year")).toHaveValue("2022");
+    expect(screen.getByLabelText("Archive month")).toHaveValue("1");
+    expect(screen.getByTestId("archive-map")).toHaveAttribute("data-query", "year=2022&month=1");
+  });
   it("loads metadata, legend and filters the API", async () => {
     render(<RealDashboard />);
     await screen.findByText(/617,112 imported source records/);
