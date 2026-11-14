@@ -256,3 +256,9 @@ def polygon_weekly(body: PolygonBody, conn=Depends(get_db)):
 from .comparison import router as comparison_router
 
 app.include_router(comparison_router)
+
+
+@app.get("/prototype", include_in_schema=False)
+def prototype_preview():
+    from fastapi.responses import FileResponse
+    return FileResponse(Path(__file__).resolve().parent.parent / "frontend/prototype/index.html")

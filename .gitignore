@@ -1,11 +1,11 @@
+# Python environment and caches
 .venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .env
+
+# Local datasets and generated databases
 data/raw/
 data/processed/
-.pytest_cache/
-.env
 data/*.db
-data/raw/

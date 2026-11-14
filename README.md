@@ -3,6 +3,25 @@
 Harmonizes MODIS and VIIRS active-fire detections into a weekly "burning activity" index and serves it through an API.
 The API output is an **index of detected burning activity** (MODIS-equivalent burning cell-days), not a count of fires or burned area.
 
+## Workspace guide
+
+This repository also contains Indonesia archive ingestion, comparison APIs, and two frontends. The Philippines demo instructions below describe the original pipeline; use the linked Indonesia documentation for that workflow.
+
+| Location | Purpose |
+| --- | --- |
+| `api/` | FastAPI routes and application entry point |
+| `firewatch/` | Data processing, analysis, and database access |
+| `scripts/` | Data inspection, cleaning, and database-building commands |
+| `frontend/command-center/` | Command Center web app; see its [setup instructions](frontend/command-center/README.md) for the required sibling archive service |
+| `frontend/prototype/` | Small Indonesia comparison preview served at `/prototype`; see [API instructions](docs/indonesia_api.md) |
+| `tests/` | All Python tests and shared pytest fixtures |
+| `docs/` | Schemas, setup guides, and milestone notes |
+| `data/` | Local archives, processing outputs, and databases; excluded from Git |
+
+For Indonesia, start with the [database guide](docs/indonesia_database.md), [comparison API guide](docs/indonesia_api.md), and [cleaned data schema](docs/data_schema.md). Milestone notes in `docs/member2_progress.md` and `docs/prototype.md` record earlier stages and may describe older integration details.
+
+Keep original downloads intact. Although the current builder reads archive JSON files under `data/processed/`, retain their existing locations to preserve file references. Use `data/raw/` for new original downloads and explicit input paths when needed. Keep synthetic/demo data clearly labelled.
+
 ## 1. Setup (Windows PowerShell)
 
 ```powershell

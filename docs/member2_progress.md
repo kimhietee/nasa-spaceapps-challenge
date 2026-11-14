@@ -6,7 +6,7 @@
 - [x] Count unique cells per UTC day and sensor.
 - [x] Export daily counts and 52 weekly bins per sensor.
 - [x] Test repeat observations, sensors, filters, grid boundaries, year-end, and missing data.
-- [x] Include both test/ and tests/ in pytest discovery.
+- [x] Include cleaning, comparison, and backend tests in pytest discovery (now consolidated under `tests/`).
 - [x] Commit and push comparison milestone (cb2e286).
 - [x] Expose comparison through a file-backed API endpoint; verify real output.
 - [ ] Connect comparison to backend database and map endpoints.
@@ -18,7 +18,7 @@
 From the repository root, using the existing Python environment:
 
 ```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s test -v
+.\.venv\Scripts\python.exe -m pytest tests/test_clean_firms.py tests/test_comparison.py tests/test_comparison_api.py -v
 .\.venv\Scripts\python.exe -m firewatch.comparison data/processed/modis_run_02/detections_clean.json data/processed/viirs_run_01/detections_clean.json --output data/processed/comparison_run_01/comparison.json
 ```
 
@@ -100,3 +100,13 @@ geographic alignment remain open checklist items.
 Latest fetched backend/setup: 372fe75. It changes dayofyear to day_of_year
 and test discovery formatting. These remote changes have not been merged locally;
 coordinate synchronization before opening the next pull request.
+
+
+## Prototype preview milestone
+- [x] Isolated branch prototype/indonesia-preview.
+- [x] Real-data UI at /prototype: totals, chart, weekly table, sensor/week filters.
+- [x] 26 existing tests pass; prototype route and API totals verified.
+- [x] Browser checked: MODIS week 1 returns 32 and one table row;
+  reset restores 17,478 MODIS / 65,207 VIIRS and 104 rows.
+- [ ] Map, multi-year data, observation matching, forecasts remain pending.
+See docs/prototype.md for startup and scope. No commits or pushes performed.

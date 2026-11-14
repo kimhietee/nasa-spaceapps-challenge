@@ -10,7 +10,7 @@ No additional Python packages are required.
 ## Run from the repository root (Windows PowerShell)
 
 ```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s test -v
+.\.venv\Scripts\python.exe -m pytest tests/test_clean_firms.py -v
 .\.venv\Scripts\python.exe scripts/clean_firms.py data/raw/fire_archive_M-C61_846503.json --output data/processed/modis_run_02
 .\.venv\Scripts\python.exe scripts/clean_firms.py data/raw/fire_archive_SV-C2_846504.json --output data/processed/viirs_run_01
 ```
@@ -86,5 +86,5 @@ and reproduce these runs, or arrange a separate data handoff.
   defaults and historical baseline assumptions do not fit these 2024 inputs.
 - Historical anomaly scoring requires an appropriate baseline; this dataset
   alone does not supply one.
-- Backend pytest currently targets tests/, while these tests use test/.
-  Reconcile discovery when integrating branches so neither suite is skipped.
+- All Python tests now live in `tests/`; run `python -m pytest` from the
+  repository root to include both cleaning and backend tests.
