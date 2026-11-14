@@ -251,3 +251,8 @@ def polygon_weekly(body: PolygonBody, conn=Depends(get_db)):
     out = scored[["year", "week", "modis_cd", "viirs_cd", "harmonized", "pct_rank", "z", "low_confidence"]]
     return {"cells_in_polygon": int(len(ids)), "calibration_beta_used": beta, "data": records(out),
             "climatology": clim, "critical_periods_p90": detect_critical_periods(clim, 90), **meta(conn)}
+
+
+from .comparison import router as comparison_router
+
+app.include_router(comparison_router)

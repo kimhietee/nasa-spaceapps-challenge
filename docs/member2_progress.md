@@ -8,7 +8,8 @@
 - [x] Test repeat observations, sensors, filters, grid boundaries, year-end, and missing data.
 - [x] Include both test/ and tests/ in pytest discovery.
 - [x] Commit and push comparison milestone (cb2e286).
-- [ ] Connect comparison results to the backend database and API.
+- [x] Expose comparison through a file-backed API endpoint; verify real output.
+- [ ] Connect comparison to backend database and map endpoints.
 - [ ] Align the backend geographic settings and grid with Indonesia.
 - [ ] Evaluate experimental calibration on held-out periods if required.
 - [ ] Supply an appropriate historical baseline before anomaly scoring.
@@ -73,3 +74,29 @@ installed in this local environment. Test discovery is configured for both folde
 - After integration, run cleaner/comparison tests, the backend suite, and a real
   data API check. Passing unit tests alone does not establish full integration.
 - Update this checklist after each completed milestone and record validation.
+
+
+## Comparison API milestone - 2026-11-14
+- [x] Teammate reports dependency mismatch resolved.
+- [x] GET /api/comparison/weekly serves the existing comparison JSON.
+- [x] Optional sensor=MODIS or sensor=VIIRS_SNPP returns 52 rows.
+- [x] Missing/invalid comparison files return 503; invalid sensor returns 422.
+- [x] 26 tests and 12 subtests pass locally (2 existing deprecation warnings).
+- [x] Real-data response exactly matches saved weekly rows: MODIS 17,478,
+  VIIRS S-NPP 65,207 active cell-days.
+
+Run `.\.venv\Scripts\python.exe -m uvicorn api.main:app --reload`, then open
+http://127.0.0.1:8000/api/comparison/weekly or /docs.
+By default this reads data/processed/comparison_run_01/comparison.json;
+FIREWATCH_COMPARISON can override the file path. Generate the file on each
+teammate's computer or share it separately; it is not committed to Git.
+The response labels coverage unknown and calibrated false, and includes grid
+metadata and limitations. This endpoint does not require the legacy database.
+
+Legacy /api/aois endpoints, Philippine regions, and database grid remain unchanged.
+They must not be treated as Indonesia results. Database/map integration and
+geographic alignment remain open checklist items.
+
+Latest fetched backend/setup: 372fe75. It changes dayofyear to day_of_year
+and test discovery formatting. These remote changes have not been merged locally;
+coordinate synchronization before opening the next pull request.
