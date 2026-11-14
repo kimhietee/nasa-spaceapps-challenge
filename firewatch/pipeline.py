@@ -59,7 +59,7 @@ def clean_firms(raw):
 
     cleaned["year"] = cleaned["acq_date"].dt.year.astype(int)
     cleaned["month"] = cleaned["acq_date"].dt.month.astype(int)
-    doy = cleaned["acq_date"].dt.dayofyear.astype(int)
+    doy = cleaned["acq_date"].dt.day_of_year.astype(int)
     cleaned["week"] = np.minimum(52, (doy - 1) // 7 + 1)   # fixed 7-day bins, not ISO weeks
     cleaned["utc_date"] = cleaned["acq_date"].dt.strftime("%Y-%m-%d")
     return cleaned
