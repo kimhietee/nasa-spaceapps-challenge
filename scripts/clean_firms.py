@@ -1,8 +1,9 @@
-"""Validate MODIS JSON records and export standardized detections."""
+"""Validate MODIS and VIIRS S-NPP JSON records and export standardized detections."""
 import argparse
 import hashlib
 import json
 import math
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -21,12 +22,18 @@ def clean_record(record):
     if not isinstance(record, dict):
         raise ValueError("record must be an object")
 
-    if str(record["instrument"]).strip().upper() != "MODIS":
-        raise ValueError("instrument must be MODIS")
-
-    satellite = str(record["satellite"]).strip().title()
-    if satellite not in {"Terra", "Aqua"}:
-        raise ValueError("unrecognized MODIS satellite")
+    instrument = str(record["instrument"]).strip().upper()
+    satellite = str(record["satellite"]).strip().upper()
+    if instrument == "MODIS" and satellite in {"TERRA", "AQUA"}:
+        sensor = "MODIS"
+        satellite = satellite.title()
+    elif instrument in {"SNPP", "VIIRS"} and satellite in {
+        "SNPP", "S-NPP", "SUOMI-NPP", "NPP", "N"
+    }:
+        sensor = "VIIRS_SNPP"
+        satellite = "Suomi-NPP"
+    else:
+        raise ValueError("unsupported instrument/satellite combination")
 
     date = str(record["acq_date"]).strip()
     time = str(record["acq_time"]).strip()
@@ -43,13 +50,25 @@ def clean_record(record):
     if daynight not in {"D", "N"}:
         raise ValueError("daynight must be D or N")
 
-    confidence = number(record["confidence"], "confidence", 0, 100)
-    if not confidence.is_integer():
-        raise ValueError("MODIS confidence must be an integer")
-
     version = str(record["version"]).strip()
-    if not version.startswith("61"):
-        raise ValueError("expected MODIS Collection 6.1")
+    if sensor == "MODIS":
+        confidence = number(record["confidence"], "confidence", 0, 100)
+        if not confidence.is_integer():
+            raise ValueError("MODIS confidence must be an integer")
+        confidence = int(confidence)
+        confidence_scale = "MODIS_0_100"
+        if not re.fullmatch(r"61(?:\.\d+)?", version):
+            raise ValueError("expected MODIS Collection 6.1")
+    else:
+        confidence = str(record["confidence"]).strip().lower()
+        confidence = {"low": "l", "nominal": "n", "high": "h"}.get(
+            confidence, confidence
+        )
+        if confidence not in {"l", "n", "h"}:
+            raise ValueError("VIIRS confidence must be l, n, or h")
+        confidence_scale = "VIIRS_L_N_H"
+        if not re.fullmatch(r"2(?:\.\d+)?", version):
+            raise ValueError("expected VIIRS Collection 2")
 
     detection_type = record.get("type")
     if detection_type is not None:
@@ -59,14 +78,14 @@ def clean_record(record):
         detection_type = int(detection_type)
 
     return {
-        "sensor": "MODIS",
+        "sensor": sensor,
         "satellite": satellite,
         "latitude": number(record["latitude"], "latitude", -90, 90),
         "longitude": number(record["longitude"], "longitude", -180, 180),
         "acquired_at_utc": timestamp.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "frp_mw": number(record["frp"], "frp", 0, float("inf")),
-        "confidence_value": int(confidence),
-        "confidence_scale": "MODIS_0_100",
+        "confidence_value": confidence,
+        "confidence_scale": confidence_scale,
         "daynight": daynight,
         "collection_version": version,
         "detection_type": detection_type,
@@ -140,7 +159,7 @@ def main():
     # A new output directory prevents accidental replacement of earlier runs.
     args.output.mkdir(parents=True, exist_ok=False)
     for filename, contents in (
-        ("modis_clean.json", {"schema_version": "1.0", "detections": clean}),
+        ("detections_clean.json", {"schema_version": "1.0", "detections": clean}),
         ("quality_report.json", report),
     ):
         with (args.output / filename).open("w", encoding="utf-8") as file:

@@ -1,6 +1,6 @@
 import unittest
 
-from scripts.clean_modis import clean_record, process
+from scripts.clean_firms import clean_record, process
 
 
 # Synthetic fixture, not a real satellite observation.
@@ -57,6 +57,39 @@ class CleaningTests(unittest.TestCase):
         clean, report = process([], "mock.json")
         self.assertEqual(clean, [])
         self.assertEqual(report["input_records"], 0)
+
+
+    def test_viirs_archive_fields(self):
+        record = {**SAMPLE, "instrument": "SNPP", "satellite": "SNPP",
+                  "version": "2", "confidence": "n"}
+        result = clean_record(record)
+        self.assertEqual(result["sensor"], "VIIRS_SNPP")
+        self.assertEqual(result["satellite"], "Suomi-NPP")
+        self.assertEqual(result["confidence_value"], "n")
+        self.assertEqual(result["confidence_scale"], "VIIRS_L_N_H")
+        for confidence in ("l", "h"):
+            self.assertEqual(clean_record({**record, "confidence": confidence})[
+                "confidence_value"], confidence)
+        for changes in ({"confidence": "59"}, {"version": "20"},
+                        {"satellite": "NOAA-20"}):
+            with self.subTest(changes=changes):
+                with self.assertRaises(ValueError):
+                    clean_record({**record, **changes})
+
+    def test_viirs_aliases_and_types_are_preserved(self):
+        for label, expected in (("low", "l"), ("nominal", "n"), ("high", "h")):
+            for detection_type in range(4):
+                record = {**SAMPLE, "instrument": "VIIRS", "satellite": "N",
+                          "version": "2", "confidence": label, "type": detection_type}
+                result = clean_record(record)
+                self.assertEqual(result["confidence_value"], expected)
+                self.assertEqual(result["detection_type"], detection_type)
+
+    def test_rejects_malformed_modis_version(self):
+        for version in ("610", "61garbage"):
+            with self.subTest(version=version):
+                with self.assertRaises(ValueError):
+                    clean_record({**SAMPLE, "version": version})
 
 
 if __name__ == "__main__":

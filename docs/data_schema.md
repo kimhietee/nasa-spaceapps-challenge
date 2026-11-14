@@ -1,52 +1,90 @@
-# MODIS cleaned data — schema 1.0
+# FIRMS cleaned data - schema 1.0
 
-Input: NASA FIRMS MODIS Collection 6.1 JSON requested for Indonesia, 2024.
+Inputs: NASA FIRMS MODIS Collection 6.1 and VIIRS S-NPP Collection 2 JSON
+requested for Indonesia, January 1 through December 31, 2024.
 
-Output: `data/processed/modis_run_01/modis_clean.json`
+The shared cleaner is `scripts/clean_firms.py`. It processes one JSON array
+per invocation. The old `scripts/clean_modis.py` command is replaced.
+No additional Python packages are required.
 
-The JSON object contains `schema_version` and a `detections` array.
+## Run from the repository root (Windows PowerShell)
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s test -v
+.\.venv\Scripts\python.exe scripts/clean_firms.py data/raw/fire_archive_M-C61_846503.json --output data/processed/modis_run_02
+.\.venv\Scripts\python.exe scripts/clean_firms.py data/raw/fire_archive_SV-C2_846504.json --output data/processed/viirs_run_01
+```
+
+Use a NEW output directory for each subsequent run; existing directories
+are not overwritten. The runs above already exist locally.
+
+## Output contract
+
+Each run contains `detections_clean.json` and `quality_report.json`.
+The detection file is an object with `schema_version: "1.0"` and a
+`detections` array. The backend should read that array from both sensor
+outputs. No sensor observations are merged into unique fire events here.
 
 | Field | Meaning |
 |---|---|
-| sensor | MODIS |
-| satellite | Terra or Aqua |
+| sensor | MODIS or VIIRS_SNPP |
+| satellite | Terra, Aqua, or Suomi-NPP |
 | latitude, longitude | Geographic coordinates in degrees |
-| acquired_at_utc | Acquisition timestamp, e.g. 2024-01-01T02:14:00Z |
+| acquired_at_utc | UTC timestamp, e.g. 2024-01-01T02:14:00Z |
 | frp_mw | Fire radiative power in megawatts |
-| confidence_value | Original MODIS confidence, integer 0–100 |
-| confidence_scale | MODIS_0_100; do not interpret as VIIRS confidence |
+| confidence_value | MODIS integer 0-100; VIIRS string l, n, or h |
+| confidence_scale | MODIS_0_100 or VIIRS_L_N_H |
 | daynight | D = day, N = night |
-| collection_version | Original source version |
-| detection_type | Original NASA type code, or null if absent |
+| collection_version | Original source version as a string |
+| detection_type | Original NASA type code (0-3), or null if absent |
 | source_file | Original filename |
 | source_row | One-based record position in the input JSON array |
 
+VIIRS l/n/h mean low/nominal/high. Confidence scales are sensor-specific;
+never compare them numerically or convert them to equivalent percentages.
+The downloaded VIIRS instrument and satellite both say SNPP; these are
+normalized to sensor VIIRS_SNPP and satellite Suomi-NPP.
+
 ## Cleaning and limitations
 
-The cleaner validates required output fields, timestamps within 2024,
-coordinate ranges, confidence, and nonnegative finite FRP.
-It removes exact duplicate source records.
+The cleaner validates required fields, timestamps within 2024, global
+coordinate ranges, sensor/satellite combinations, collection versions,
+confidence, and finite nonnegative FRP. Exact duplicate source records
+are removed within each input file; cross-file deduplication is not performed.
 
 Low-confidence detections and all recognized detection types are retained.
-Indonesia’s country boundary is not independently checked.
-Fields not exported remain available in the unchanged raw download.
+Indonesia's country boundary is not independently checked. Fields not
+exported remain available in the unchanged raw downloads. Both input and
+output are held in memory; this is a single-year prototype, not a streaming loader.
 
-These are satellite detections, not unique fires, burned area, or
-harmonized activity. Zero detections does not establish zero fire activity.
+These are satellite detections, not unique fires, burned area, or harmonized
+activity. Zero detections does not establish zero fire activity.
 
-## Initial run
+## Verified runs
 
-- Input records: 23,542
-- Accepted: 23,542
-- Exact duplicates removed: 0
-- Rejected: 0
+| Run folder | Input | Accepted | Duplicates | Rejected |
+|---|---:|---:|---:|---:|
+| modis_run_02 | 23,542 | 23,542 | 0 | 0 |
+| viirs_run_01 | 104,186 | 104,186 | 0 | 0 |
 
-`quality_report.json` records rejection reasons and the input SHA-256 checksum.
-Raw and processed datasets are excluded from Git.
+The earlier modis_run_01 is preserved; its detections match modis_run_02.
+Use only the latest chosen run per sensor, not all historical run folders.
+
+The quality report records rejection reasons, one-based source rows,
+counts, source filename, and input SHA-256 checksum. Raw and processed
+files are excluded from Git; teammates must obtain the originals separately
+and reproduce these runs, or arrange a separate data handoff.
 
 ## Team handoff
 
-- Member 2: use this detection schema for harmonization; document later filtering.
-- Member 3: dashboard data is not yet aggregated into daily activity.
-- Member 4: use latitude/longitude for markers and UTC timestamps for filtering.
-- VIIRS support remains pending inspection of its downloaded file.
+- Member 1 owns ingestion, validation, deduplication, and this shared schema.
+- Backend reads the cleaned JSON and owns documented analysis filters,
+  harmonization, database storage, and API responses.
+- Dashboard data is not yet aggregated into daily or weekly activity.
+- Map consumers use latitude/longitude and UTC timestamps.
+- Backend integration must use Indonesia settings; the earlier Philippine
+  defaults and historical baseline assumptions do not fit these 2024 inputs.
+- Historical anomaly scoring requires an appropriate baseline; this dataset
+  alone does not supply one.
+- Backend pytest currently targets tests/, while these tests use test/.
+  Reconcile discovery when integrating branches so neither suite is skipped.
