@@ -6,7 +6,10 @@ import { nitro } from "nitro/vite";
 import { defineConfig, loadEnv } from "vite";
 
 export default defineConfig(({ command, mode }) => {
-  const environment = loadEnv(mode, process.cwd(), "VITE_");
+  const environment = {
+    VITE_ARCHIVE_API: mode === "production" ? "https://nasa-repo-1.onrender.com" : "",
+    ...loadEnv(mode, process.cwd(), "VITE_"),
+  };
   return {
     define: Object.fromEntries(
       Object.entries(environment).map(([key, value]) => [
