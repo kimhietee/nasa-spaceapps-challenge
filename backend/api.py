@@ -15,7 +15,9 @@ from fastapi.responses import FileResponse
 from .ingest import DB, ROOT, CONFIG
 
 app=FastAPI(title="FIREWATCH real Indonesia archive",version="1.0")
-app.add_middleware(CORSMiddleware,allow_origins=['http://localhost:8080','http://127.0.0.1:8080','http://localhost:5173','http://127.0.0.1:5173'],allow_methods=['GET'])
+allowed_origins = ['http://localhost:8080','http://127.0.0.1:8080','http://localhost:5173','http://127.0.0.1:5173']
+allowed_origins += [origin.strip().rstrip('/') for origin in os.getenv('FIREWATCH_ALLOWED_ORIGINS', '').split(',') if origin.strip()]
+app.add_middleware(CORSMiddleware,allow_origins=allowed_origins,allow_methods=['GET'])
 
 @contextmanager
 def database():
