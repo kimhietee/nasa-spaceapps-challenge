@@ -1,0 +1,31 @@
+# Python environment and caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.env
+
+# Local datasets and generated databases
+data/raw/
+data/processed/
+data/*.db
+data/raw/
+
+# Local datasets, databases and generated files
+data/raw/
+data/processed/
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+node_modules/
+.output/
+.wrangler/
+.tanstack/
+*.log
+.env
+.env.*
+
+backend/data/
+
+.vercel/
